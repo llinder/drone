@@ -42,6 +42,7 @@ func WsUser(c web.C, w http.ResponseWriter, r *http.Request) {
 	// upgrade the websocket
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
+		log.Printf("WS: Error upgrading user connection. %s\n", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -144,6 +145,7 @@ func WsConsole(c web.C, w http.ResponseWriter, r *http.Request) {
 	// upgrade the websocket
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
+		log.Printf("WS: Error upgrading console connection. %s\n", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
