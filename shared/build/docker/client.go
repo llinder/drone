@@ -15,13 +15,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/docker/docker/pkg/term"
-	"github.com/docker/docker/utils"
 )
 
 const (
-	APIVERSION        = 1.9
+	APIVERSION        = 1.12
 	DEFAULTHTTPPORT   = 2375
 	DEFAULTUNIXSOCKET = "/var/run/docker.sock"
 	DEFAULTPROTOCOL   = "unix"
@@ -353,7 +353,7 @@ func (c *Client) stream(method, path string, in io.Reader, out io.Writer, header
 
 		// it may not make sense to put this code here, but it works for
 		// us at the moment, and I don't feel like refactoring
-		return utils.DisplayJSONMessagesStream(resp.Body, out, terminalFd, isTerminal)
+		return jsonmessage.DisplayJSONMessagesStream(resp.Body, out, terminalFd, isTerminal)
 	}
 	// otherwise plain text
 	if _, err := io.Copy(out, resp.Body); err != nil {

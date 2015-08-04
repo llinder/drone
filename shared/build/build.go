@@ -234,8 +234,8 @@ func (b *Builder) setup() error {
 	log.Info("creating build image")
 
 	// check for build container (ie bradrydzewski/go:1.2)
-	// and download if it doesn't already exist
-	if _, err := b.dockerClient.Images.Inspect(b.Build.Image); err == docker.ErrNotFound {
+	// and download if it doesn't already exist or it's :latest tag
+	if _, err := b.dockerClient.Images.Inspect(b.Build.Image); err == docker.ErrNotFound || strings.HasSuffix(b.Build.Image, ":latest") {
 		// download the image if it doesn't exist
 		if err := b.dockerClient.Images.Pull(b.Build.Image); err != nil {
 			return fmt.Errorf("Error: Unable to pull image %s. %s", b.Build.Image, err)
@@ -322,11 +322,12 @@ func (b *Builder) run() error {
 		AttachStdin:  false,
 		AttachStdout: true,
 		AttachStderr: true,
+		Tty:          script.DockerTty(b.Build.Docker),
 	}
 
 	// configure if Docker should run in privileged mode
 	host := docker.HostConfig{
-		Privileged: (b.Privileged && len(b.Repo.PR) == 0),
+		Privileged: (b.Privileged && b.Repo.IsTrusted()),
 	}
 
 	if host.Privileged {
@@ -362,7 +363,6 @@ func (b *Builder) run() error {
 	conf.Volumes = make(map[string]struct{})
 	for _, volume := range b.Build.Cache {
 		name := filepath.Clean(b.Repo.Name)
-		branch := filepath.Clean(b.Repo.Branch)
 		volume := filepath.Clean(volume)
 
 		// with Docker, volumes must be an absolute path. If an absolute
@@ -374,7 +374,7 @@ func (b *Builder) run() error {
 
 		// local cache path on the host machine
 		// this path is going to be really long
-		hostpath := filepath.Join(tmpPath, name, branch, volume)
+		hostpath := filepath.Join(tmpPath, name, volume)
 
 		// check if the volume is created
 		if _, err := os.Stat(hostpath); err != nil {
